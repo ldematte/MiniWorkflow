@@ -6,32 +6,25 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MiniWorkflow
-{
+{   
+
     [Serializable]
-    public class Sequence : Activity
+    public class Sequence : CompositeActivity
     {
-        private static Logger logger = LogManager.GetCurrentClassLogger();
-
         int currentIndex;
-        List<Activity> statements = new List<Activity>();
-        public IList<Activity> Statements
-        {
-            get { return statements; }
-        }
-
         protected internal override ActivityExecutionStatus Execute(WorkflowInstanceContext context)
         {
             logger.Debug("Sequence::Execute");
             currentIndex = 0;
             // Empty statement block
-            if (statements.Count == 0)
+            if (children.Count == 0)
             {
                 context.CloseActivity();
                 return ActivityExecutionStatus.Closed;
             }
             else
             {
-                context.RunProgramStatement(statements[0], ContinueAt);
+                context.RunProgramStatement(children[0], ContinueAt);
                 return ActivityExecutionStatus.Executing;
             }
         }
@@ -40,10 +33,14 @@ namespace MiniWorkflow
         {
             logger.Debug("Sequence::ContinueAt");
             // If we've run all the statements, we're done
-            if (++currentIndex == statements.Count) 
+            if (++currentIndex == children.Count) 
                 context.CloseActivity();
             else // Else, run the next statement
-                context.RunProgramStatement(statements[currentIndex], ContinueAt);
+                context.RunProgramStatement(children[currentIndex], ContinueAt);
         }        
     }
+
+
+    
+
 }

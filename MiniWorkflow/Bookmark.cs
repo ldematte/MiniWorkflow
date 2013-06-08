@@ -11,6 +11,7 @@ namespace MiniWorkflow
     {
         public string Name { get; set; }
 
+        public Activity Activity { get; set; }
         public Action<WorkflowInstanceContext, object> ContinueAt { get; set; }
 
         public object Payload { get; set; }

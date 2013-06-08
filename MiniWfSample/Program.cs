@@ -22,9 +22,9 @@ namespace MiniWorkflow.Example
             WorkflowRuntime.Bind(printKey.Key, printGreeting.Key);
             WorkflowRuntime.Bind(read.Text, printGreeting.Input);
 
-            openSesameProgram.Statements.Add(printKey);
-            openSesameProgram.Statements.Add(read);
-            openSesameProgram.Statements.Add(printGreeting);
+            openSesameProgram.Add(printKey);
+            openSesameProgram.Add(read);
+            openSesameProgram.Add(printGreeting);
 
             return openSesameProgram;
         }

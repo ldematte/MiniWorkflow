@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Parallel.cs" />
     <Compile Include="WorkflowInstanceContext.cs" />
     <Compile Include="ActivityExecutionStatus.cs" />
     <Compile Include="Activity.cs" />

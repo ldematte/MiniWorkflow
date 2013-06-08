@@ -1,6 +1,7 @@
 ﻿using NLog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -13,16 +14,33 @@ namespace MiniWorkflow
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         private readonly Dictionary<string, Bookmark> bookmarks = new Dictionary<string,Bookmark>();
-        private Bookmark InternalBookmark = null;
-
+        
         public void CreateBookmark(string name, Action<WorkflowInstanceContext, object> continuation)
         {
             bookmarks.Add(name, new Bookmark
                 {
                     ContinueAt = continuation,
                     Name = name,
+                    Activity = currentExecutingActivity,
                     ActivityExecutionContext = this
                 });
+        }
+
+        private Bookmark InternalBookmark = null;
+
+        private Activity currentExecutingActivity = null;
+
+        internal void ExecuteActivity(Activity activity)
+        {
+            Debug.Assert(activity.ExecutionStatus == ActivityExecutionStatus.Initialized);
+            currentExecutingActivity = activity;
+            activity.executionStatus = activity.Execute(this);
+
+            if (activity.ExecutionStatus == ActivityExecutionStatus.Closed)
+            {
+                CloseActivity();
+            }
+            // TODO: handle other conditions
         }
 
         public void CloseActivity()
@@ -39,6 +57,12 @@ namespace MiniWorkflow
                 InternalBookmark = null;
                 continuation(context, value);
             }
+
+            if (currentExecutingActivity != null)
+            {
+                currentExecutingActivity.executionStatus = ActivityExecutionStatus.Closed;
+                currentExecutingActivity = null;
+            }
         }
 
         // This method, called from an Activity, says: "the next statement to run is this. 
@@ -48,11 +72,18 @@ namespace MiniWorkflow
             logger.Debug("Context::RunProgramStatement");
             // This code replaces
             // context.Add(new Bookmark(activity.Name, ContinueAt));
+
+            // Execute the a activity
+            Debug.Assert(activity.ExecutionStatus == ActivityExecutionStatus.Initialized);
+            currentExecutingActivity = activity;
+            activity.executionStatus = activity.Execute(this);
             
-            var result = activity.Execute(this);
             // The activity already completed?
-            if (result == ActivityExecutionStatus.Closed)
+            if (activity.ExecutionStatus == ActivityExecutionStatus.Closed)
+            {
                 continueAt(this, null);
+                currentExecutingActivity = null;
+            }
             else
             {
                 // Save for later...
@@ -60,6 +91,7 @@ namespace MiniWorkflow
                 {
                     ContinueAt = continueAt,
                     Name = "",
+                    Activity = activity,
                     ActivityExecutionContext = this
                 };
             }
@@ -72,5 +104,7 @@ namespace MiniWorkflow
             bookmarks.Remove(bookmarkName);
             bookmark.ContinueAt(this, payload);
         }
+
+        
     }
 }

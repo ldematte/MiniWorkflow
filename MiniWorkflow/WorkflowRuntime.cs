@@ -82,12 +82,8 @@ namespace MiniWorkflow
 
             // TODO: Separate creation and execution.
             // Consider introducing an execution queue?
-            bool continueExecution = true;
-            while (continueExecution) {
-                var result = program.Execute(context);
-                continueExecution = result == ActivityExecutionStatus.Closed;
-            }
-
+            context.ExecuteActivity(program);
+            
             return handle;
         }
 
