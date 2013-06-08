@@ -19,7 +19,7 @@ namespace MiniWorkflow
             // Empty statement block
             if (children.Count == 0)
             {
-                context.CloseActivity();
+                //CloseActivity(context);
                 return ActivityExecutionStatus.Closed;
             }
             else
@@ -33,8 +33,8 @@ namespace MiniWorkflow
         {
             logger.Debug("Sequence::ContinueAt");
             // If we've run all the statements, we're done
-            if (++currentIndex == children.Count) 
-                context.CloseActivity();
+            if (++currentIndex == children.Count)
+                CloseActivity(context);
             else // Else, run the next statement
                 context.RunProgramStatement(children[currentIndex], ContinueAt);
         }        

@@ -26,7 +26,7 @@ namespace MiniWorkflow
                 if (activity.ExecutionStatus != ActivityExecutionStatus.Closed)
                     return;
             }
-            context.CloseActivity();
+            CloseActivity(context);
         }
     }
 }

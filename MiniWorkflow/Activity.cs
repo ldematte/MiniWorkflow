@@ -49,6 +49,11 @@ namespace MiniWorkflow
         {
             get { return executionStatus; } 
         }
+
+        protected void CloseActivity(WorkflowInstanceContext context)
+        {
+            context.CloseActivity(this);
+        }
     }
 
     [Serializable]

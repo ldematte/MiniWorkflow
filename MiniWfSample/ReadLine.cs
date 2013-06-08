@@ -55,7 +55,7 @@ namespace MiniWorkflow.Example
         void ContinueAt(WorkflowInstanceContext context, object value)
         {
             this.Text.Value = (string)value;
-            context.CloseActivity();
+            CloseActivity(context);
         }
     }
 }

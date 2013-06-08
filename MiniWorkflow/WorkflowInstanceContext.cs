@@ -21,48 +21,42 @@ namespace MiniWorkflow
                 {
                     ContinueAt = continuation,
                     Name = name,
-                    Activity = currentExecutingActivity,
                     ActivityExecutionContext = this
                 });
         }
 
-        private Bookmark InternalBookmark = null;
-
-        private Activity currentExecutingActivity = null;
+        internal void ResumeBookmark(string bookmarkName, object payload)
+        {
+            var bookmark = bookmarks[bookmarkName];
+            //TODO use queues, and deque an item, instead of having just one
+            bookmarks.Remove(bookmarkName);
+            bookmark.ContinueAt(this, payload);
+        }
 
         internal void ExecuteActivity(Activity activity)
         {
             Debug.Assert(activity.ExecutionStatus == ActivityExecutionStatus.Initialized);
-            currentExecutingActivity = activity;
             activity.executionStatus = activity.Execute(this);
 
             if (activity.ExecutionStatus == ActivityExecutionStatus.Closed)
             {
-                CloseActivity();
+                CloseActivity(activity);
             }
             // TODO: handle other conditions
         }
 
-        public void CloseActivity()
+        internal void CloseActivity(Activity activity)
         {
             logger.Debug("Context::CloseActivity");
-            // Someone just completed an activity.
-            // Do we need to resume something?
-            if (InternalBookmark != null)
-            {
-                logger.Debug("Context: resuming internal bookmark");
-                var continuation = InternalBookmark.ContinueAt;
-                var context = InternalBookmark.ActivityExecutionContext;
-                var value = InternalBookmark.Payload;
-                InternalBookmark = null;
-                continuation(context, value);
-            }
 
-            if (currentExecutingActivity != null)
-            {
-                currentExecutingActivity.executionStatus = ActivityExecutionStatus.Closed;
-                currentExecutingActivity = null;
+            // Someone just completed this activity.
+            // Do we need to resume something?
+            if (activity.Closed != null)
+            {            
+                logger.Debug("Context: resuming internal bookmark");
+                activity.Closed(this, null);
             }
+            activity.executionStatus = ActivityExecutionStatus.Closed;
         }
 
         // This method, called from an Activity, says: "the next statement to run is this. 
@@ -75,36 +69,18 @@ namespace MiniWorkflow
 
             // Execute the a activity
             Debug.Assert(activity.ExecutionStatus == ActivityExecutionStatus.Initialized);
-            currentExecutingActivity = activity;
             activity.executionStatus = activity.Execute(this);
             
             // The activity already completed?
             if (activity.ExecutionStatus == ActivityExecutionStatus.Closed)
             {
                 continueAt(this, null);
-                currentExecutingActivity = null;
             }
             else
             {
                 // Save for later...
-                InternalBookmark = new Bookmark
-                {
-                    ContinueAt = continueAt,
-                    Name = "",
-                    Activity = activity,
-                    ActivityExecutionContext = this
-                };
+                activity.Closed = continueAt;
             }
-        }
-
-        internal void ResumeBookmark(string bookmarkName, object payload)
-        {            
-            var bookmark = bookmarks[bookmarkName];
-            //TODO use queues, and deque an item, instead of having just one
-            bookmarks.Remove(bookmarkName);
-            bookmark.ContinueAt(this, payload);
-        }
-
-        
+        }        
     }
 }
