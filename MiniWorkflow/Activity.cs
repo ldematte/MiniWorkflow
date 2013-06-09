@@ -13,7 +13,7 @@ namespace MiniWorkflow
         [NonSerialized]
         protected static Logger logger = LogManager.GetCurrentClassLogger();
 
-        internal Action<WorkflowInstanceContext, object> Closed = null;
+        internal Action<WorkflowContext, object> Closed = null;
 
         public Activity()
         {
@@ -35,7 +35,7 @@ namespace MiniWorkflow
 
         public bool IsRoot { get { return Parent == null; } }
 
-        abstract protected internal ActivityExecutionStatus Execute(WorkflowInstanceContext context);
+        abstract protected internal ActivityExecutionStatus Execute(WorkflowContext context);
 
         protected readonly string name;
         public string Name
@@ -50,7 +50,7 @@ namespace MiniWorkflow
             get { return executionStatus; } 
         }
 
-        protected void CloseActivity(WorkflowInstanceContext context)
+        protected void CloseActivity(WorkflowContext context)
         {
             context.CloseActivity(this);
         }

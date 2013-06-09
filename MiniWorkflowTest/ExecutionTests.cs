@@ -12,7 +12,8 @@ namespace MiniWorkflowTest
         public void SimpleExecution()
         {
             var runtime = new WorkflowRuntime();
-            var handle = runtime.RunProgram(SampleProgram.Create());
+            var handle = runtime.CreateProgram();
+            handle.Start(SampleProgram.Create());
 
             // Simulate input reception
             string input = "400";                
@@ -27,7 +28,8 @@ namespace MiniWorkflowTest
         {
             var runtime = new WorkflowRuntime();
 
-            var handle = runtime.RunProgram(SampleProgram.Create());
+            var handle = runtime.CreateProgram();
+            handle.Start(SampleProgram.Create());
 
             Guid programId = handle.ProgramId;
 

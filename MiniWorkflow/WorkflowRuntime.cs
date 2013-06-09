@@ -10,31 +10,34 @@ namespace MiniWorkflow
 {
     public class WorkflowHandle
     {
-        internal WorkflowHandle(WorkflowInstanceContext context)
+        private readonly WorkflowRuntime runtime;
+        internal WorkflowHandle(WorkflowStatus status, WorkflowRuntime runtime)
         {
-            this.context = context;
+            this.status = status;
             this.programId = Guid.NewGuid();
+            this.runtime = runtime;
         }
 
-        internal WorkflowHandle(Guid programId)
+        internal WorkflowHandle(Guid programId, WorkflowRuntime runtime)
         {
-            this.context = null;
+            this.status = null;
             this.programId = programId;
+            this.runtime = runtime;
         }
 
-        public WorkflowInstanceContext context { get; private set; }        
+        private WorkflowStatus status;
 
         // Unique identifier for this program
         private readonly Guid programId;
         public Guid ProgramId { get { return programId; } }
 
-        internal bool IsPassivated { get { return context == null; } }
+        internal bool IsPassivated { get { return status == null; } }
 
         // Passivate the program
         public void Passivate()
         {
             Persist();
-            context = null;
+            status = null;
         }
 
         public void Persist()
@@ -45,7 +48,7 @@ namespace MiniWorkflow
             using (var stream = File.OpenWrite(programId.ToString() + ".bin"))
             {
                 var formatter = new BinaryFormatter();
-                formatter.Serialize(stream, context);
+                formatter.Serialize(stream, status);
             }
         }
 
@@ -59,30 +62,45 @@ namespace MiniWorkflow
                 using (var stream = File.OpenRead(programId.ToString() + ".bin"))
                 {
                     var formatter = new BinaryFormatter();
-                    context = (WorkflowInstanceContext)formatter.Deserialize(stream);
+                    status = (WorkflowStatus)formatter.Deserialize(stream);
                 }
             }
 
+            var context = new WorkflowContext(status, runtime);
             context.ResumeBookmark(bookmarkName, payload);
+        }
+
+        public void Start(Activity program)
+        {
+            if (!program.IsRoot)
+                throw new InvalidOperationException("You can only start a root activity");
+            var context = new WorkflowContext(status, runtime);            
+            context.ExecuteActivity(program);
         }
     }
 
-    public class WorkflowRuntime
+    public class WorkflowRuntime: IDisposable
     {
         private readonly Dictionary<Guid, WorkflowHandle> memoryWorkflows = new Dictionary<Guid, WorkflowHandle>();
 
-        // Starts a new program
-        public WorkflowHandle RunProgram(Activity program)
-        {
-            var context = new WorkflowInstanceContext();            
-            // Q: should a context be completely independent?
-            // but the queue(s) in the context should be serialized anyway...
-            var handle = new WorkflowHandle(context);
-            memoryWorkflows.Add(handle.ProgramId, handle);
+        private readonly ExecutionQueue executionQueue = new ExecutionQueue();
 
-            // TODO: Separate creation and execution.
-            // Consider introducing an execution queue?
-            context.ExecuteActivity(program);
+        public WorkflowRuntime()
+        {
+            executionQueue.Start();
+        }
+
+        public void Dispose()
+        {
+            executionQueue.Stop();
+        }
+
+        // Starts a new program
+        public WorkflowHandle CreateProgram()
+        {
+            var status = new WorkflowStatus();
+            var handle = new WorkflowHandle(status, this);
+            memoryWorkflows.Add(handle.ProgramId, handle);
             
             return handle;
         }
@@ -92,15 +110,21 @@ namespace MiniWorkflow
         {
             WorkflowHandle handle;
             if (!memoryWorkflows.ContainsKey(programId))            
-               handle = new WorkflowHandle(programId);            
+               handle = new WorkflowHandle(programId, this);            
             else
                handle =  memoryWorkflows[programId];
             return handle;
         }
 
+        public void Post(Action action)
+        {
+            executionQueue.Post(action);
+        }
+
         // Passivates all in-memory programs
         public void Shutdown()
         {
+            executionQueue.Stop();
             foreach (var transientWorkflow in memoryWorkflows.Values)
                 transientWorkflow.Passivate();
         }

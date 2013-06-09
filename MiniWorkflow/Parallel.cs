@@ -9,7 +9,7 @@ namespace MiniWorkflow
 {
     public class Parallel : CompositeActivity
     {
-        protected internal override ActivityExecutionStatus Execute(WorkflowInstanceContext context)
+        protected internal override ActivityExecutionStatus Execute(WorkflowContext context)
         {
             foreach (var activity in children)
             {
@@ -18,7 +18,7 @@ namespace MiniWorkflow
             return ActivityExecutionStatus.Executing;
         }
 
-        private void ContinueAt(WorkflowInstanceContext context, object arg)
+        private void ContinueAt(WorkflowContext context, object arg)
         {
             foreach (var activity in children)
             {

@@ -13,7 +13,7 @@ namespace MiniWorkflow.Example
     {
         public OutArgument<string> Key = new OutArgument<string>();
 
-        protected override ActivityExecutionStatus Execute(WorkflowInstanceContext context)
+        protected override ActivityExecutionStatus Execute(WorkflowContext context)
         {
             // Print the key
             Key.Value = DateTime.Now.Millisecond.ToString();
@@ -29,7 +29,7 @@ namespace MiniWorkflow.Example
         public InArgument<string> Key = new InArgument<string>();
         public InArgument<string> Input = new InArgument<string>();
 
-        protected override ActivityExecutionStatus Execute(WorkflowInstanceContext context)
+        protected override ActivityExecutionStatus Execute(WorkflowContext context)
         {
             // Print the greeting if the key is provided
             if (Key.Value.Equals(Input.Value))
@@ -44,15 +44,15 @@ namespace MiniWorkflow.Example
     [Serializable]
     public class ReadLine : Activity
     {
-        public OutArgument<string> Text = new OutArgument<string>();       
+        public OutArgument<string> Text = new OutArgument<string>();
 
-        protected override ActivityExecutionStatus Execute(WorkflowInstanceContext context)
+        protected override ActivityExecutionStatus Execute(WorkflowContext context)
         {
             context.CreateBookmark(this.Name, this.ContinueAt);
             return ActivityExecutionStatus.Executing;
         }
 
-        void ContinueAt(WorkflowInstanceContext context, object value)
+        void ContinueAt(WorkflowContext context, object value)
         {
             this.Text.Value = (string)value;
             CloseActivity(context);

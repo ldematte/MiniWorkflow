@@ -12,10 +12,10 @@ namespace MiniWorkflow
         public string Name { get; set; }
 
         public Activity Activity { get; set; }
-        public Action<WorkflowInstanceContext, object> ContinueAt { get; set; }
+        public Action<WorkflowContext, object> ContinueAt { get; set; }
 
         public object Payload { get; set; }
-        
-        public WorkflowInstanceContext ActivityExecutionContext { get; set; }
+
+        public WorkflowContext ActivityExecutionContext { get; set; }
     }
 }

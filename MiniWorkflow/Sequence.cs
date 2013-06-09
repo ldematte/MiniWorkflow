@@ -12,7 +12,7 @@ namespace MiniWorkflow
     public class Sequence : CompositeActivity
     {
         int currentIndex;
-        protected internal override ActivityExecutionStatus Execute(WorkflowInstanceContext context)
+        protected internal override ActivityExecutionStatus Execute(WorkflowContext context)
         {
             logger.Debug("Sequence::Execute");
             currentIndex = 0;
@@ -29,7 +29,7 @@ namespace MiniWorkflow
             }
         }
 
-        public void ContinueAt(WorkflowInstanceContext context, object value)
+        public void ContinueAt(WorkflowContext context, object value)
         {
             logger.Debug("Sequence::ContinueAt");
             // If we've run all the statements, we're done

@@ -40,9 +40,11 @@ namespace MiniWorkflow.Example
 
             var runtime = new WorkflowRuntime();
 
-            var handle = runtime.RunProgram(SampleProgram.Create());
-
+            var handle = runtime.CreateProgram();
             Guid programId = handle.ProgramId;
+
+            handle.Start(SampleProgram.Create());
+
             while (true)
             {
                 // Save the workflow
