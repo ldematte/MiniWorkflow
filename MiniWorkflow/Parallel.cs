@@ -22,7 +22,7 @@ namespace MiniWorkflow
         {
             foreach (var activity in children)
             {
-                //Check every activity is closes...
+                //Check every activity is closed...
                 if (activity.ExecutionStatus != ActivityExecutionStatus.Closed)
                     return;
             }

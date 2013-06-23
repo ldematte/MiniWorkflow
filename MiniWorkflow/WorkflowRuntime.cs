@@ -42,14 +42,10 @@ namespace MiniWorkflow
 
         public void Persist()
         {
-            // Persisting means:
-            // Saving the context
-            // TODO: separate this concern
-            using (var stream = File.OpenWrite(programId.ToString() + ".bin"))
-            {
-                var formatter = new BinaryFormatter();
-                formatter.Serialize(stream, status);
-            }
+            runtime.ExecutionQueue.Pause();
+            // Persisting means: saving the status
+            runtime.PersistenceEngine.Save(programId, status);
+            runtime.ExecutionQueue.Resume();
         }
 
         // Resume a bookmarked program
@@ -58,12 +54,7 @@ namespace MiniWorkflow
             // Check that it is not passivated..
             if (IsPassivated)
             {
-                // TODO: separate this concern
-                using (var stream = File.OpenRead(programId.ToString() + ".bin"))
-                {
-                    var formatter = new BinaryFormatter();
-                    status = (WorkflowStatus)formatter.Deserialize(stream);
-                }
+                runtime.PersistenceEngine.Load(programId);
             }
 
             var context = new WorkflowContext(status, runtime);
@@ -83,7 +74,12 @@ namespace MiniWorkflow
     {
         private readonly Dictionary<Guid, WorkflowHandle> memoryWorkflows = new Dictionary<Guid, WorkflowHandle>();
 
+        // TODO: make both execution queue and persitence pluggable
         private readonly ExecutionQueue executionQueue = new ExecutionQueue();
+        private readonly PersistenceEngine persistenceEngine = new FilePersistenceEngine();
+
+        internal PersistenceEngine PersistenceEngine { get { return persistenceEngine; } }
+        internal ExecutionQueue ExecutionQueue { get { return executionQueue; } }
 
         public WorkflowRuntime()
         {
@@ -133,6 +129,6 @@ namespace MiniWorkflow
         public static void Bind<T>(OutArgument<T> from, InArgument<T> to)
         {
             to.LinkedArg = from;
-        }
+        }        
     }
 }

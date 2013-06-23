@@ -16,6 +16,6 @@ namespace MiniWorkflow
 
         public object Payload { get; set; }
 
-        public WorkflowContext ActivityExecutionContext { get; set; }
+        //public WorkflowContext ActivityExecutionContext { get; set; }
     }
 }

@@ -43,7 +43,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExecutionQueue.cs" />
+    <Compile Include="FilePersistenceEngine.cs" />
     <Compile Include="Parallel.cs" />
+    <Compile Include="PersistenceEngine.cs" />
     <Compile Include="WorkflowInstanceContext.cs" />
     <Compile Include="ActivityExecutionStatus.cs" />
     <Compile Include="Activity.cs" />

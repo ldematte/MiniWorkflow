@@ -9,7 +9,7 @@ namespace MiniWorkflow.Example
 {
 
     [Serializable]
-    public class PrintKey : Activity
+    public class GenerateKey : Activity
     {
         public OutArgument<string> Key = new OutArgument<string>();
 
@@ -17,25 +17,27 @@ namespace MiniWorkflow.Example
         {
             // Print the key
             Key.Value = DateTime.Now.Millisecond.ToString();
-            Console.WriteLine("here is your key: " + Key.Value);
+            logger.Debug("Generated key: " + Key.Value);
 
             return ActivityExecutionStatus.Closed;
         }
     }
 
     [Serializable]
-    public class PrintGreeting : Activity
+    public class CheckMatching : Activity
     {
         public InArgument<string> Key = new InArgument<string>();
         public InArgument<string> Input = new InArgument<string>();
 
+        public OutArgument<bool> Result = new OutArgument<bool>();
+
         protected override ActivityExecutionStatus Execute(WorkflowContext context)
         {
-            // Print the greeting if the key is provided
+            // Check key matching
             if (Key.Value.Equals(Input.Value))
-                Console.WriteLine("hello, world");
+                Result.Value = true;
             else
-                Console.WriteLine("goodbye, world");
+                Result.Value = false;
 
             return ActivityExecutionStatus.Closed;
         }

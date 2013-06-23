@@ -26,12 +26,9 @@ namespace MiniWorkflow
         }
     }
 
-    [Serializable]
     public class WorkflowContext
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-
-       
         private readonly WorkflowRuntime runtime;
 
         private readonly WorkflowStatus status;
@@ -46,8 +43,7 @@ namespace MiniWorkflow
             status.AddBookmark(name, new Bookmark
                 {
                     ContinueAt = continuation,
-                    Name = name,
-                    ActivityExecutionContext = this
+                    Name = name
                 });
         }
 
@@ -75,8 +71,6 @@ namespace MiniWorkflow
 
         internal void CloseActivity(Activity activity)
         {
-            logger.Debug("Context::CloseActivity");
-
             logger.Debug("Closing " + activity.GetType().Name);
 
             // Someone just completed this activity.

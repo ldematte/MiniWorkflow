@@ -10,18 +10,38 @@ namespace MiniWorkflow
 {
     public class ExecutionQueue
     {
-        private readonly BlockingCollection<Action> workItemQueue = new BlockingCollection<Action>();
+        private readonly ConcurrentQueue<Action> workItemQueue = new ConcurrentQueue<Action>();
 
         public void Post(Action workItem)
         {
-            workItemQueue.Add(workItem);
+            workItemQueue.Enqueue(workItem);
+            items.Release();
         }
 
         private Thread thread = null;
+        
+        private ManualResetEvent finished = new ManualResetEvent(false);
+        private Semaphore items = new Semaphore(0, 32);
+
+        //private Object executionLock = new Object();
+        SpinLock executionLock = new SpinLock();
+
+        public void Pause()
+        {            
+            //Monitor.Enter(executionLock);
+            var lockTaken = false;
+            while (!lockTaken)
+                executionLock.Enter(ref lockTaken);
+        }
+
+        public void Resume()
+        {
+            executionLock.Exit();
+        }        
 
         public void Stop()
         {
-            workItemQueue.CompleteAdding();
+            finished.Set();
             thread.Join();
             thread = null;
         }
@@ -33,25 +53,27 @@ namespace MiniWorkflow
 
             thread = new Thread(() =>
             {
-                while (!workItemQueue.IsCompleted)
-                {
+                while (true) {
+                    int reason = WaitHandle.WaitAny(new WaitHandle[] { finished, items });
 
-                    Action workItem = null;
-                    // Blocks if number.Count == 0 
-                    // IOE means that Take() was called on a completed collection. 
-                    // Some other thread can call CompleteAdding after we pass the 
-                    // IsCompleted check but before we call Take.  
-                    // Here we can simply catch the exception since the  
-                    // loop will break on the next iteration. 
+                    if (reason == 0)
+                        break;
+                    
+                    var lockTaken = false;
+                    // Block "executing", to make other threads to wait on items execution...
                     try
                     {
-                        workItem = workItemQueue.Take();
-                    }
-                    catch (InvalidOperationException) { }
+                        while (!lockTaken)
+                            executionLock.Enter(ref lockTaken);
 
-                    if (workItem != null)
+                        Action workItem = null;
+                        if (workItemQueue.TryDequeue(out workItem))
+                            workItem.Invoke();
+                    }
+                    finally
                     {
-                        workItem.Invoke();
+                        if (lockTaken)
+                            executionLock.Exit();
                     }
                 }
             });

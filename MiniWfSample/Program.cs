@@ -15,9 +15,9 @@ namespace MiniWorkflow.Example
         public static Activity Create()
         {
             var openSesameProgram = new Sequence();
-            var printKey = new PrintKey();
+            var printKey = new GenerateKey();
             var read = new ReadLine();
-            var printGreeting = new PrintGreeting();
+            var printGreeting = new CheckMatching();
 
             WorkflowRuntime.Bind(printKey.Key, printGreeting.Key);
             WorkflowRuntime.Bind(read.Text, printGreeting.Input);
